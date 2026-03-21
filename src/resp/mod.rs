@@ -28,6 +28,7 @@ use rustis::{
     client::Client,
     commands::{FlushingMode, ServerCommands, StringCommands},
     Result,
+    resp::WithSerialize,
 };
 use serde::Serialize;
 
@@ -50,7 +51,7 @@ async fn main() -> Result<()> {
     client.set("key", "value").await?;
     client.set("key", "value".to_owned()).await?;
     client.set("key", 'c').await?;
-    client.set("key", MyI32(12)).await?;
+    client.set("key", WithSerialize(MyI32(12))).await?;
 
     Ok(())
 }

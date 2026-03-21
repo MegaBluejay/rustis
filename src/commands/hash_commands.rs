@@ -2,7 +2,8 @@ use crate::{
     client::{PreparedCommand, prepare_command},
     commands::{ExpireOption, GetExOptions, SetExpiration},
     resp::{
-        ArgCounter, FastPathCommandBuilder, Response, cmd, deserialize_vec_of_pairs, serialize_flag,
+        ArgCounter, FastPathCommandBuilder, FastSerialize, Response, cmd, deserialize_vec_of_pairs,
+        serialize_flag,
     },
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -158,8 +159,8 @@ pub trait HashCommands<'a>: Sized {
     #[must_use]
     fn hget<R: Response>(
         self,
-        key: impl Serialize,
-        field: impl Serialize,
+        key: impl FastSerialize,
+        field: impl FastSerialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, FastPathCommandBuilder::hget(key, field))
     }
@@ -241,8 +242,8 @@ pub trait HashCommands<'a>: Sized {
     #[must_use]
     fn hincrby(
         self,
-        key: impl Serialize,
-        field: impl Serialize,
+        key: impl FastSerialize,
+        field: impl FastSerialize,
         increment: i64,
     ) -> PreparedCommand<'a, Self, i64> {
         prepare_command(self, FastPathCommandBuilder::hincrby(key, field, increment))

@@ -1,6 +1,9 @@
 use crate::{
     client::{PreparedCommand, prepare_command},
-    resp::{FastPathCommandBuilder, Response, cmd, deserialize_vec_of_pairs, serialize_flag},
+    resp::{
+        FastPathCommandBuilder, FastSerialize, Response, cmd, deserialize_vec_of_pairs,
+        serialize_flag,
+    },
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -145,9 +148,9 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zincrby(
         self,
-        key: impl Serialize,
+        key: impl FastSerialize,
         increment: f64,
-        member: impl Serialize,
+        member: impl FastSerialize,
     ) -> PreparedCommand<'a, Self, f64> {
         prepare_command(
             self,

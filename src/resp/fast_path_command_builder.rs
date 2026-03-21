@@ -1,12 +1,117 @@
+#[cfg(feature = "json")]
+pub use crate::resp::JsonRef;
 #[cfg(debug_assertions)]
 use crate::resp::next_sequence_counter;
-use crate::resp::{ArgLayout, Command, hash_slot};
+use crate::resp::{ArgLayout, BulkString, Command, hash_slot};
 use bytes::{BufMut, BytesMut};
 use dtoa::Float;
 use itoa::Integer;
 use serde::{Serialize, Serializer, ser};
 use smallvec::SmallVec;
-use std::{fmt::Error, ops::Range};
+use std::{borrow::Cow, fmt::Error, ops::Range, rc::Rc, sync::Arc};
+
+pub trait FastSerialize: Serialize {
+    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>;
+}
+
+pub struct WithFastSerialize<T>(pub T);
+
+impl<T: FastSerialize> Serialize for WithFastSerialize<T> {
+    #[inline(always)]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.rserialize(serializer)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(transparent)]
+pub struct WithSerialize<T>(pub T);
+
+macro_rules! serialize_impl {
+    ($({$($desc:tt)*}),* $(,)?) => {
+        $(
+            impl $($desc)* {
+                #[inline(always)]
+                fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                    self.serialize(serializer)
+                }
+            }
+        )*
+    };
+}
+
+serialize_impl! {
+    { <T: Serialize> FastSerialize for WithSerialize<T> },
+}
+
+#[cfg(feature = "json")]
+serialize_impl! {
+    { <'a, T: Serialize> FastSerialize for JsonRef<'a, T> },
+}
+
+macro_rules! primitive_impl {
+    ($($ty:ty),* $(,)?) => {
+        serialize_impl!($({ FastSerialize for $ty }),*);
+    }
+}
+
+primitive_impl!(
+    bool, isize, i8, i16, i32, i64, i128, usize, u8, u16, u32, u64, u128, f32, f64, char, str,
+    String, BulkString,
+);
+
+impl FastSerialize for [u8] {
+    #[inline(always)]
+    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_bytes(self)
+    }
+}
+
+impl<const N: usize> FastSerialize for [u8; N]
+where
+    [u8; N]: Serialize,
+{
+    #[inline(always)]
+    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.as_slice().rserialize(serializer)
+    }
+}
+
+impl<T: FastSerialize> FastSerialize for Option<T> {
+    #[inline(always)]
+    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Some(value) => serializer.serialize_some(&WithFastSerialize(value)),
+            None => serializer.serialize_none(),
+        }
+    }
+}
+
+macro_rules! deref_impl {
+    ($({$($desc:tt)*}),* $(,)?) => {
+        $(
+            impl $($desc)* {
+                #[inline(always)]
+                fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                    (**self).rserialize(serializer)
+                }
+            }
+        )*
+    };
+}
+
+deref_impl! {
+    { <'a, T: ?Sized + FastSerialize> FastSerialize for &'a T },
+    { <'a, T: ?Sized + FastSerialize> FastSerialize for &'a mut T },
+    { <T: ?Sized + FastSerialize> FastSerialize for Box<T> },
+    { <T: ?Sized + FastSerialize> FastSerialize for Rc<T> where Rc<T>: Serialize },
+    { <T: ?Sized + FastSerialize> FastSerialize for Arc<T> where Arc<T>: Serialize },
+    { <'a, T: ?Sized + FastSerialize + ToOwned> FastSerialize for Cow<'a, T> },
+    { FastSerialize for Vec<u8> },
+}
 
 pub struct FastPathCommandBuilder {
     buffer: BytesMut,
@@ -28,10 +133,10 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn arg(mut self, arg: impl Serialize) -> Self {
+    pub fn arg(mut self, arg: impl FastSerialize) -> Self {
         let mut serializer = FastPathRespSerializer::new(&mut self.buffer);
         let range = arg
-            .serialize(&mut serializer)
+            .rserialize(&mut serializer)
             .expect("Argument serialization failed");
 
         self.args_layout.push(ArgLayout::arg(range));
@@ -39,10 +144,10 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn key(mut self, key: impl Serialize) -> Self {
+    pub fn key(mut self, key: impl FastSerialize) -> Self {
         let mut serializer = FastPathRespSerializer::new(&mut self.buffer);
         let range = key
-            .serialize(&mut serializer)
+            .rserialize(&mut serializer)
             .expect("Argument serialization failed");
 
         self.args_layout.push(ArgLayout::key(
@@ -69,14 +174,14 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn get(key: impl Serialize) -> Command {
+    pub fn get(key: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*2\r\n$3\r\nGET\r\n", (8, 3))
             .key(key)
             .build()
     }
 
     #[inline(always)]
-    pub fn set(key: impl Serialize, value: impl Serialize) -> Command {
+    pub fn set(key: impl FastSerialize, value: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$3\r\nSET\r\n", (8, 3))
             .key(key)
             .arg(value)
@@ -84,7 +189,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn expire(key: impl Serialize, seconds: u64) -> Command {
+    pub fn expire(key: impl FastSerialize, seconds: u64) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$6\r\nEXPIRE\r\n", (8, 6))
             .key(key)
             .arg(seconds)
@@ -92,7 +197,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn hget(key: impl Serialize, field: impl Serialize) -> Command {
+    pub fn hget(key: impl FastSerialize, field: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$4\r\nHGET\r\n", (8, 4))
             .key(key)
             .arg(field)
@@ -100,7 +205,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn hincrby(key: impl Serialize, field: impl Serialize, increment: i64) -> Command {
+    pub fn hincrby(key: impl FastSerialize, field: impl FastSerialize, increment: i64) -> Command {
         FastPathCommandBuilder::new(b"*4\r\n$7\r\nHINCRBY\r\n", (8, 7))
             .key(key)
             .arg(field)
@@ -109,7 +214,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn sismember(key: impl Serialize, member: impl Serialize) -> Command {
+    pub fn sismember(key: impl FastSerialize, member: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$9\r\nSISMEMBER\r\n", (8, 9))
             .key(key)
             .arg(member)
@@ -117,7 +222,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn zincrby(key: impl Serialize, increment: f64, member: impl Serialize) -> Command {
+    pub fn zincrby(key: impl FastSerialize, increment: f64, member: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*4\r\n$7\r\nZINCRBY\r\n", (8, 7))
             .key(key)
             .arg(increment)
@@ -126,7 +231,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn publish(channel: impl Serialize, message: impl Serialize) -> Command {
+    pub fn publish(channel: impl FastSerialize, message: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$7\r\nPUBLISH\r\n", (8, 7))
             .arg(channel)
             .arg(message)
@@ -134,7 +239,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn lpush(key: impl Serialize, element: impl Serialize) -> Command {
+    pub fn lpush(key: impl FastSerialize, element: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$5\r\nLPUSH\r\n", (8, 5))
             .key(key)
             .arg(element)
@@ -142,7 +247,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn rpush(key: impl Serialize, element: impl Serialize) -> Command {
+    pub fn rpush(key: impl FastSerialize, element: impl FastSerialize) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$5\r\nRPUSH\r\n", (8, 5))
             .key(key)
             .arg(element)
@@ -150,7 +255,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn lpop(key: impl Serialize, count: u32) -> Command {
+    pub fn lpop(key: impl FastSerialize, count: u32) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$4\r\nLPOP\r\n", (8, 4))
             .key(key)
             .arg(count)
@@ -158,7 +263,7 @@ impl FastPathCommandBuilder {
     }
 
     #[inline(always)]
-    pub fn rpop(key: impl Serialize, count: u32) -> Command {
+    pub fn rpop(key: impl FastSerialize, count: u32) -> Command {
         FastPathCommandBuilder::new(b"*3\r\n$4\r\nRPOP\r\n", (8, 4))
             .key(key)
             .arg(count)
@@ -192,7 +297,7 @@ impl<'a> FastPathRespSerializer<'a> {
     ///
     /// # Format
     /// `$Length\r\nData\r\n`
-    #[inline]
+    #[inline(always)]
     pub fn write_arg(&mut self, data: &[u8]) -> Range<usize> {
         // 1. Write the RESP BulkString header ($Len\r\n)
         let data_len = data.len();

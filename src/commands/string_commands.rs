@@ -1,7 +1,7 @@
 use crate::{
     client::{PreparedCommand, prepare_command},
     commands::{RequestPolicy, ResponsePolicy},
-    resp::{FastPathCommandBuilder, Response, cmd},
+    resp::{FastPathCommandBuilder, FastSerialize, Response, cmd},
 };
 use serde::{
     Deserialize, Deserializer, Serialize,
@@ -111,7 +111,7 @@ pub trait StringCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/get/>](https://redis.io/commands/get/)
     #[must_use]
-    fn get<R: Response>(self, key: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn get<R: Response>(self, key: impl FastSerialize) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, FastPathCommandBuilder::get(key))
     }
 
@@ -491,7 +491,11 @@ pub trait StringCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/set/>](https://redis.io/commands/set/)
     #[must_use]
-    fn set(self, key: impl Serialize, value: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn set(
+        self,
+        key: impl FastSerialize,
+        value: impl FastSerialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, FastPathCommandBuilder::set(key, value))
     }
 

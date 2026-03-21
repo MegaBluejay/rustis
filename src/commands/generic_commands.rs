@@ -1,7 +1,10 @@
 use crate::{
     client::{PreparedCommand, prepare_command},
     commands::{RequestPolicy, ResponsePolicy},
-    resp::{BulkString, CommandArgsMut, FastPathCommandBuilder, Response, cmd, serialize_flag},
+    resp::{
+        BulkString, CommandArgsMut, FastPathCommandBuilder, FastSerialize, Response, cmd,
+        serialize_flag,
+    },
 };
 use serde::{Deserialize, Serialize};
 
@@ -94,7 +97,7 @@ pub trait GenericCommands<'a>: Sized {
     #[must_use]
     fn expire(
         self,
-        key: impl Serialize,
+        key: impl FastSerialize,
         seconds: u64,
         option: impl Into<Option<ExpireOption>>,
     ) -> PreparedCommand<'a, Self, bool> {

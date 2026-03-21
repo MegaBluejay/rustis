@@ -2,7 +2,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
     client::{PreparedCommand, prepare_command},
-    resp::{FastPathCommandBuilder, Response, cmd},
+    resp::{FastPathCommandBuilder, FastSerialize, Response, cmd},
 };
 
 /// A group of Redis commands related to [`Lists`](https://redis.io/docs/data-types/lists/)
@@ -118,7 +118,11 @@ pub trait ListCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/lpop/>](https://redis.io/commands/lpop/)
     #[must_use]
-    fn lpop<R: Response>(self, key: impl Serialize, count: u32) -> PreparedCommand<'a, Self, R> {
+    fn lpop<R: Response>(
+        self,
+        key: impl FastSerialize,
+        count: u32,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, FastPathCommandBuilder::lpop(key, count))
     }
 
@@ -279,7 +283,11 @@ pub trait ListCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/rpop/>](https://redis.io/commands/rpop/)
     #[must_use]
-    fn rpop<R: Response>(self, key: impl Serialize, count: u32) -> PreparedCommand<'a, Self, R> {
+    fn rpop<R: Response>(
+        self,
+        key: impl FastSerialize,
+        count: u32,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, FastPathCommandBuilder::rpop(key, count))
     }
 

@@ -8,8 +8,8 @@ use crate::{
         StringCommands, ZRangeOptions,
     },
     resp::{
-        BulkString, Command, CommandArgsMut, FastPathCommandBuilder, RespDeserializer,
-        RespResponse, Response,
+        BulkString, Command, CommandArgsMut, FastPathCommandBuilder, FastSerialize,
+        RespDeserializer, RespResponse, Response,
     },
 };
 use bytes::Bytes;
@@ -126,7 +126,7 @@ impl Cache {
     }
 
     /// Executes the `GET` command with client-side caching.
-    pub async fn get<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn get<R: Response + DeserializeOwned>(&self, key: impl FastSerialize) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.get(key))
             .await
     }
@@ -240,8 +240,8 @@ impl Cache {
     /// Executes the `HGET` command with client-side caching.
     pub async fn hget<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
-        field: impl Serialize,
+        key: impl FastSerialize,
+        field: impl FastSerialize,
     ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hget(key, field))
             .await
@@ -330,7 +330,11 @@ impl Cache {
     }
 
     /// Executes the `SISMEMBER` command with client-side caching.
-    pub async fn sismember(&self, key: impl Serialize, member: impl Serialize) -> Result<bool> {
+    pub async fn sismember(
+        &self,
+        key: impl FastSerialize,
+        member: impl FastSerialize,
+    ) -> Result<bool> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.sismember(key, member))
             .await
     }

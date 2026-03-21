@@ -1,7 +1,7 @@
 use crate::{
     Result,
     client::{PreparedCommand, PubSubStream, prepare_command},
-    resp::{FastPathCommandBuilder, Response, cmd},
+    resp::{FastPathCommandBuilder, FastSerialize, Response, cmd},
 };
 use serde::Serialize;
 
@@ -61,8 +61,8 @@ pub trait PubSubCommands<'a>: Sized {
     /// [<https://redis.io/commands/publish/>](https://redis.io/commands/publish/)
     fn publish(
         self,
-        channel: impl Serialize,
-        message: impl Serialize,
+        channel: impl FastSerialize,
+        message: impl FastSerialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, FastPathCommandBuilder::publish(channel, message))
     }

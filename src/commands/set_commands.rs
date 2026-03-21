@@ -1,6 +1,6 @@
 use crate::{
     client::{PreparedCommand, prepare_command},
-    resp::{FastPathCommandBuilder, Response, cmd},
+    resp::{FastPathCommandBuilder, FastSerialize, Response, cmd},
 };
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -128,8 +128,8 @@ pub trait SetCommands<'a>: Sized {
     #[must_use]
     fn sismember(
         self,
-        key: impl Serialize,
-        member: impl Serialize,
+        key: impl FastSerialize,
+        member: impl FastSerialize,
     ) -> PreparedCommand<'a, Self, bool> {
         prepare_command(self, FastPathCommandBuilder::sismember(key, member))
     }
