@@ -1,117 +1,12 @@
-#[cfg(feature = "json")]
-pub use crate::resp::JsonRef;
 #[cfg(debug_assertions)]
 use crate::resp::next_sequence_counter;
-use crate::resp::{ArgLayout, BulkString, Command, hash_slot};
+use crate::resp::{ArgLayout, Command, FastSerialize, hash_slot};
 use bytes::{BufMut, BytesMut};
 use dtoa::Float;
 use itoa::Integer;
-use serde::{Serialize, Serializer, ser};
+use serde::{Serializer, ser};
 use smallvec::SmallVec;
-use std::{borrow::Cow, fmt::Error, ops::Range, rc::Rc, sync::Arc};
-
-pub trait FastSerialize: Serialize {
-    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>;
-}
-
-pub struct WithFastSerialize<T>(pub T);
-
-impl<T: FastSerialize> Serialize for WithFastSerialize<T> {
-    #[inline(always)]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.0.rserialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(transparent)]
-pub struct WithSerialize<T>(pub T);
-
-macro_rules! serialize_impl {
-    ($({$($desc:tt)*}),* $(,)?) => {
-        $(
-            impl $($desc)* {
-                #[inline(always)]
-                fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                    self.serialize(serializer)
-                }
-            }
-        )*
-    };
-}
-
-serialize_impl! {
-    { <T: Serialize> FastSerialize for WithSerialize<T> },
-}
-
-#[cfg(feature = "json")]
-serialize_impl! {
-    { <'a, T: Serialize> FastSerialize for JsonRef<'a, T> },
-}
-
-macro_rules! primitive_impl {
-    ($($ty:ty),* $(,)?) => {
-        serialize_impl!($({ FastSerialize for $ty }),*);
-    }
-}
-
-primitive_impl!(
-    bool, isize, i8, i16, i32, i64, i128, usize, u8, u16, u32, u64, u128, f32, f64, char, str,
-    String, BulkString,
-);
-
-impl FastSerialize for [u8] {
-    #[inline(always)]
-    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_bytes(self)
-    }
-}
-
-impl<const N: usize> FastSerialize for [u8; N]
-where
-    [u8; N]: Serialize,
-{
-    #[inline(always)]
-    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.as_slice().rserialize(serializer)
-    }
-}
-
-impl<T: FastSerialize> FastSerialize for Option<T> {
-    #[inline(always)]
-    fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Some(value) => serializer.serialize_some(&WithFastSerialize(value)),
-            None => serializer.serialize_none(),
-        }
-    }
-}
-
-macro_rules! deref_impl {
-    ($({$($desc:tt)*}),* $(,)?) => {
-        $(
-            impl $($desc)* {
-                #[inline(always)]
-                fn rserialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                    (**self).rserialize(serializer)
-                }
-            }
-        )*
-    };
-}
-
-deref_impl! {
-    { <'a, T: ?Sized + FastSerialize> FastSerialize for &'a T },
-    { <'a, T: ?Sized + FastSerialize> FastSerialize for &'a mut T },
-    { <T: ?Sized + FastSerialize> FastSerialize for Box<T> },
-    { <T: ?Sized + FastSerialize> FastSerialize for Rc<T> where Rc<T>: Serialize },
-    { <T: ?Sized + FastSerialize> FastSerialize for Arc<T> where Arc<T>: Serialize },
-    { <'a, T: ?Sized + FastSerialize + ToOwned> FastSerialize for Cow<'a, T> },
-    { FastSerialize for Vec<u8> },
-}
+use std::{fmt::Error, ops::Range};
 
 pub struct FastPathCommandBuilder {
     buffer: BytesMut,
@@ -135,9 +30,8 @@ impl FastPathCommandBuilder {
     #[inline(always)]
     pub fn arg(mut self, arg: impl FastSerialize) -> Self {
         let mut serializer = FastPathRespSerializer::new(&mut self.buffer);
-        let range = arg
-            .rserialize(&mut serializer)
-            .expect("Argument serialization failed");
+        let range =
+            FastSerialize::serialize(&arg, &mut serializer).expect("Argument serialization failed");
 
         self.args_layout.push(ArgLayout::arg(range));
         self
@@ -146,9 +40,8 @@ impl FastPathCommandBuilder {
     #[inline(always)]
     pub fn key(mut self, key: impl FastSerialize) -> Self {
         let mut serializer = FastPathRespSerializer::new(&mut self.buffer);
-        let range = key
-            .rserialize(&mut serializer)
-            .expect("Argument serialization failed");
+        let range =
+            FastSerialize::serialize(&key, &mut serializer).expect("Argument serialization failed");
 
         self.args_layout.push(ArgLayout::key(
             range.clone(),
@@ -412,7 +305,10 @@ impl<'a> Serializer for &'a mut FastPathRespSerializer<'a> {
     }
 
     #[inline(always)]
-    fn serialize_some<T: ?Sized + Serialize>(self, value: &T) -> Result<Self::Ok, Self::Error> {
+    fn serialize_some<T: ?Sized + serde::Serialize>(
+        self,
+        value: &T,
+    ) -> Result<Self::Ok, Self::Error> {
         value.serialize(self)
     }
 
@@ -433,7 +329,7 @@ impl<'a> Serializer for &'a mut FastPathRespSerializer<'a> {
         self.serialize_str(variant)
     }
 
-    fn serialize_newtype_struct<T: ?Sized + Serialize>(
+    fn serialize_newtype_struct<T: ?Sized + serde::Serialize>(
         self,
         _name: &'static str,
         value: &T,
@@ -449,7 +345,7 @@ impl<'a> Serializer for &'a mut FastPathRespSerializer<'a> {
         _value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
-        T: ?Sized + Serialize,
+        T: ?Sized + serde::Serialize,
     {
         Err(ser::Error::custom("FastPath only supports primitives"))
     }

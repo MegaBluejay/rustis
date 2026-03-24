@@ -29,6 +29,7 @@ json = ["dep:serde_json"]
 client-cache = ["dep:moka", "dep:dashmap"]
 bench = ["dep:criterion", "dep:fred", "dep:redis"]
 web-examples = ["dep:axum", "dep:actix-web"]
+restrict-serialize = []
 
 [dependencies]
 async-std = { version = "1.13", features = ["attributes"], optional = true }

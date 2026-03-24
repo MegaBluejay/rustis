@@ -28,8 +28,9 @@ use rustis::{
     client::Client,
     commands::{FlushingMode, ServerCommands, StringCommands},
     Result,
-    resp::WithSerialize,
 };
+#[cfg(feature = "restrict-serialize")]
+use rustis::resp::WithSerialize;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -51,7 +52,10 @@ async fn main() -> Result<()> {
     client.set("key", "value").await?;
     client.set("key", "value".to_owned()).await?;
     client.set("key", 'c').await?;
+    #[cfg(feature = "restrict-serialize")]
     client.set("key", WithSerialize(MyI32(12))).await?;
+    #[cfg(not(feature = "restrict-serialize"))]
+    client.set("key", MyI32(12)).await?;
 
     Ok(())
 }
@@ -90,6 +94,10 @@ pub use resp_deserializer::*;
 pub(crate) use resp_frame_parser::*;
 pub(crate) use resp_response::*;
 pub use response::*;
+#[cfg(feature = "restrict-serialize")]
+pub use restict_serialize::{FastSerialize, WithFastSerialize, WithSerialize};
+#[cfg(not(feature = "restrict-serialize"))]
+pub use serde::Serialize as FastSerialize;
 pub use util::*;
 pub use value::*;
 pub(crate) use value_deserialize::*;
@@ -110,6 +118,8 @@ mod resp_deserializer;
 mod resp_frame_parser;
 mod resp_response;
 mod response;
+#[cfg(feature = "restrict-serialize")]
+mod restict_serialize;
 mod util;
 mod value;
 mod value_deserialize;
