@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 ///
 /// # See Also
 /// [Top-K Commands](https://redis.io/commands/?group=topk)
+#[arg_macro::arg]
 pub trait TopKCommands<'a>: Sized {
     /// Adds an item to the data structure.
     ///
@@ -28,7 +29,7 @@ pub trait TopKCommands<'a>: Sized {
     fn topk_add<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("TOPK.ADD").key(key).arg(items))
     }
@@ -55,7 +56,7 @@ pub trait TopKCommands<'a>: Sized {
     fn topk_incrby<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("TOPK.INCRBY").key(key).arg(items))
     }
@@ -127,7 +128,7 @@ pub trait TopKCommands<'a>: Sized {
     fn topk_query<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("TOPK.QUERY").key(key).arg(items))
     }

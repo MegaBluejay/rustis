@@ -103,9 +103,10 @@ pub struct PubSubSplitSink {
     client: Client,
 }
 
+#[arg_macro::arg]
 impl PubSubSplitSink {
     /// Subscribe to additional channels
-    pub async fn subscribe(&mut self, channels: impl Serialize) -> Result<()> {
+    pub async fn subscribe(&mut self, #[arg(many)] channels: impl Serialize) -> Result<()> {
         let channels = CommandArgsMut::default().arg(channels).freeze();
 
         for channel in &channels {
@@ -124,7 +125,7 @@ impl PubSubSplitSink {
     }
 
     /// Subscribe to additional patterns
-    pub async fn psubscribe(&mut self, patterns: impl Serialize) -> Result<()> {
+    pub async fn psubscribe(&mut self, #[arg(many)] patterns: impl Serialize) -> Result<()> {
         let patterns = CommandArgsMut::default().arg(patterns).freeze();
 
         for pattern in &patterns {
@@ -143,7 +144,7 @@ impl PubSubSplitSink {
     }
 
     /// Subscribe to additional shardchannels
-    pub async fn ssubscribe(&mut self, shardchannels: impl Serialize) -> Result<()> {
+    pub async fn ssubscribe(&mut self, #[arg(many)] shardchannels: impl Serialize) -> Result<()> {
         let shardchannels = CommandArgsMut::default().arg(shardchannels).freeze();
 
         for shardchannel in &shardchannels {
@@ -161,7 +162,7 @@ impl PubSubSplitSink {
     }
 
     /// Unsubscribe from the given channels
-    pub async fn unsubscribe(&mut self, channels: impl Serialize) -> Result<()> {
+    pub async fn unsubscribe(&mut self, #[arg(many)] channels: impl Serialize) -> Result<()> {
         let channels = CommandArgsMut::default().arg(channels).freeze();
 
         for channel in &channels {
@@ -174,7 +175,7 @@ impl PubSubSplitSink {
     }
 
     /// Unsubscribe from the given patterns
-    pub async fn punsubscribe(&mut self, patterns: impl Serialize) -> Result<()> {
+    pub async fn punsubscribe(&mut self, #[arg(many)] patterns: impl Serialize) -> Result<()> {
         let patterns = CommandArgsMut::default().arg(patterns).freeze();
 
         for pattern in &patterns {
@@ -187,7 +188,7 @@ impl PubSubSplitSink {
     }
 
     /// Unsubscribe from the given patterns
-    pub async fn sunsubscribe(&mut self, shardchannels: impl Serialize) -> Result<()> {
+    pub async fn sunsubscribe(&mut self, #[arg(many)] shardchannels: impl Serialize) -> Result<()> {
         let shardchannels = CommandArgsMut::default().arg(shardchannels).freeze();
 
         for shardchannel in &shardchannels {
@@ -336,6 +337,7 @@ pub struct PubSubStream {
     split_stream: PubSubSplitStream,
 }
 
+#[arg_macro::arg]
 impl PubSubStream {
     pub(crate) fn new(sender: PubSubSender, receiver: PubSubReceiver, client: Client) -> Self {
         Self {
@@ -415,32 +417,50 @@ impl PubSubStream {
     }
 
     /// Subscribe to additional channels
-    pub async fn subscribe(&mut self, channels: impl Serialize) -> Result<()> {
+    pub async fn subscribe(
+        &mut self,
+        #[arg(many, forward)] channels: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.subscribe(channels).await
     }
 
     /// Subscribe to additional patterns
-    pub async fn psubscribe(&mut self, patterns: impl Serialize) -> Result<()> {
+    pub async fn psubscribe(
+        &mut self,
+        #[arg(many, forward)] patterns: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.psubscribe(patterns).await
     }
 
     /// Subscribe to additional shardchannels
-    pub async fn ssubscribe(&mut self, shardchannels: impl Serialize) -> Result<()> {
+    pub async fn ssubscribe(
+        &mut self,
+        #[arg(many, forward)] shardchannels: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.ssubscribe(shardchannels).await
     }
 
     /// Unsubscribe from the given channels
-    pub async fn unsubscribe(&mut self, channels: impl Serialize) -> Result<()> {
+    pub async fn unsubscribe(
+        &mut self,
+        #[arg(many, forward)] channels: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.unsubscribe(channels).await
     }
 
     /// Unsubscribe from the given patterns
-    pub async fn punsubscribe(&mut self, patterns: impl Serialize) -> Result<()> {
+    pub async fn punsubscribe(
+        &mut self,
+        #[arg(many, forward)] patterns: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.punsubscribe(patterns).await
     }
 
     /// Unsubscribe from the given patterns
-    pub async fn sunsubscribe(&mut self, shardchannels: impl Serialize) -> Result<()> {
+    pub async fn sunsubscribe(
+        &mut self,
+        #[arg(many, forward)] shardchannels: impl Serialize,
+    ) -> Result<()> {
         self.split_sink.sunsubscribe(shardchannels).await
     }
 

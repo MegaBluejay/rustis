@@ -8,8 +8,8 @@ use crate::{
         StringCommands, ZRangeOptions,
     },
     resp::{
-        BulkString, Command, CommandArgsMut, FastPathCommandBuilder, RespDeserializer,
-        RespResponse, Response,
+        Arg, BulkString, Command, CommandArgsMut, FastPathCommandBuilder, RespDeserializer,
+        RespResponse, Response, Serde,
     },
 };
 use bytes::Bytes;
@@ -75,6 +75,7 @@ pub struct Cache {
     invalidation_task: tokio::task::JoinHandle<()>,
 }
 
+#[arg_macro::arg]
 impl Cache {
     /// Create cache from a moka CacheBuilder and activates Redis client tracking invalidations
     #[allow(clippy::type_complexity)]
@@ -126,13 +127,19 @@ impl Cache {
     }
 
     /// Executes the `GET` command with client-side caching.
-    pub async fn get<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn get<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+    ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.get(key))
             .await
     }
 
     /// Executes the `MGET` command with client-side caching.
-    pub async fn mget<R: Response + DeserializeOwned>(&self, keys: impl Serialize) -> Result<R> {
+    pub async fn mget<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(many, forward)] keys: impl Serialize,
+    ) -> Result<R> {
         let prepared_command = self.client.mget::<R>(keys);
         let mut responses = Vec::with_capacity(prepared_command.command.num_args());
         let mut missing_indices = Vec::new();
@@ -211,7 +218,7 @@ impl Cache {
     /// Executes the `GETRANGE` command with client-side caching.
     pub async fn getrange<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
         start: isize,
         end: isize,
     ) -> Result<R> {
@@ -223,13 +230,17 @@ impl Cache {
     }
 
     /// Executes the `STRLEN` command with client-side caching.
-    pub async fn strlen(&self, key: impl Serialize) -> Result<usize> {
+    pub async fn strlen(&self, #[arg(forward)] key: impl Serialize) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.strlen(key))
             .await
     }
 
     /// Executes the `HEXISTS` command with client-side caching.
-    pub async fn hexists(&self, key: impl Serialize, field: impl Serialize) -> Result<bool> {
+    pub async fn hexists(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] field: impl Serialize,
+    ) -> Result<bool> {
         self.process_prepared_command(
             key_to_bulk_string(&key),
             self.client.hexists(key_to_bulk_string(&key), field),
@@ -240,39 +251,52 @@ impl Cache {
     /// Executes the `HGET` command with client-side caching.
     pub async fn hget<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
-        field: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] field: impl Serialize,
     ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hget(key, field))
             .await
     }
 
     /// Executes the `HGETALL` command with client-side caching.
-    pub async fn hgetall<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn hgetall<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+    ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hgetall(key))
             .await
     }
 
     /// Executes the `HLEN` command with client-side caching.
-    pub async fn hlen(&self, key: impl Serialize) -> Result<usize> {
+    pub async fn hlen(&self, #[arg(forward)] key: impl Serialize) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hlen(key))
             .await
     }
 
     /// Executes the `HKEYS` command with client-side caching.
-    pub async fn hkeys<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn hkeys<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+    ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hkeys(key))
             .await
     }
 
     /// Executes the `HKEYS` command with client-side caching.
-    pub async fn hvals<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn hvals<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+    ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hvals(key))
             .await
     }
 
     /// Executes the `HSTRLEN` command with client-side caching.
-    pub async fn hstrlen(&self, key: impl Serialize, field: impl Serialize) -> Result<usize> {
+    pub async fn hstrlen(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] field: impl Serialize,
+    ) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hstrlen(key, field))
             .await
     }
@@ -280,8 +304,8 @@ impl Cache {
     /// Executes the `HMGET` command with client-side caching.
     pub async fn hmget<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward, many)] fields: impl Serialize,
     ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.hmget(key, fields))
             .await
@@ -290,7 +314,7 @@ impl Cache {
     /// Executes the `LRANGE` command with client-side caching.
     pub async fn lrange<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
         start: isize,
         stop: isize,
     ) -> Result<R> {
@@ -302,7 +326,7 @@ impl Cache {
     }
 
     /// Executes the `LLEN` command with client-side caching.
-    pub async fn llen(&self, key: impl Serialize) -> Result<usize> {
+    pub async fn llen(&self, #[arg(forward)] key: impl Serialize) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.llen(key))
             .await
     }
@@ -310,7 +334,7 @@ impl Cache {
     /// Executes the `LINDEX` command with client-side caching.
     pub async fn lindex<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
         index: isize,
     ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.lindex(key, index))
@@ -318,25 +342,32 @@ impl Cache {
     }
 
     /// Executes the `SMEMBERS` command with client-side caching.
-    pub async fn smembers<R: Response + DeserializeOwned>(&self, key: impl Serialize) -> Result<R> {
+    pub async fn smembers<R: Response + DeserializeOwned>(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+    ) -> Result<R> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.smembers(key))
             .await
     }
 
     /// Executes the `SCARD` command with client-side caching.
-    pub async fn scard(&self, key: impl Serialize) -> Result<usize> {
+    pub async fn scard(&self, #[arg(forward)] key: impl Serialize) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.scard(key))
             .await
     }
 
     /// Executes the `SISMEMBER` command with client-side caching.
-    pub async fn sismember(&self, key: impl Serialize, member: impl Serialize) -> Result<bool> {
+    pub async fn sismember(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] member: impl Serialize,
+    ) -> Result<bool> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.sismember(key, member))
             .await
     }
 
     /// Executes the `ZCARD` command with client-side caching.
-    pub async fn zcard(&self, key: impl Serialize) -> Result<usize> {
+    pub async fn zcard(&self, #[arg(forward)] key: impl Serialize) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.zcard(key))
             .await
     }
@@ -344,9 +375,9 @@ impl Cache {
     /// Executes the `ZCOUNT` command with client-side caching.
     pub async fn zcount(
         &self,
-        key: impl Serialize,
-        min: impl Serialize,
-        max: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] min: impl Serialize,
+        #[arg(forward)] max: impl Serialize,
     ) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.zcount(key, min, max))
             .await
@@ -355,9 +386,9 @@ impl Cache {
     /// Executes the `ZLEXCOUNT` command with client-side caching.
     pub async fn zlexcount(
         &self,
-        key: impl Serialize,
-        min: impl Serialize,
-        max: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] min: impl Serialize,
+        #[arg(forward)] max: impl Serialize,
     ) -> Result<usize> {
         self.process_prepared_command(
             key_to_bulk_string(&key),
@@ -369,9 +400,9 @@ impl Cache {
     /// Executes the `ZRANGE` command with client-side caching.
     pub async fn zrange<R: Response + DeserializeOwned>(
         &self,
-        key: impl Serialize,
-        start: impl Serialize,
-        stop: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] start: impl Serialize,
+        #[arg(forward)] stop: impl Serialize,
         options: ZRangeOptions,
     ) -> Result<R> {
         self.process_prepared_command(
@@ -384,8 +415,8 @@ impl Cache {
     /// Executes the `ZRANK` command with client-side caching.
     pub async fn zrank(
         &self,
-        key: impl Serialize,
-        member: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] member: impl Serialize,
     ) -> Result<Option<usize>> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.zrank(key, member))
             .await
@@ -394,9 +425,9 @@ impl Cache {
     /// Executes the `ZREMRANGEBYSCORE` command with client-side caching.
     pub async fn zremrangebyscore(
         &self,
-        key: impl Serialize,
-        start: impl Serialize,
-        stop: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] start: impl Serialize,
+        #[arg(forward)] stop: impl Serialize,
     ) -> Result<usize> {
         self.process_prepared_command(
             key_to_bulk_string(&key),
@@ -408,27 +439,40 @@ impl Cache {
     /// Executes the `ZREVRANK` command with client-side caching.
     pub async fn zrevrank(
         &self,
-        key: impl Serialize,
-        member: impl Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] member: impl Serialize,
     ) -> Result<Option<usize>> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.zrevrank(key, member))
             .await
     }
 
     /// Executes the `ZSCORE` command with client-side caching.
-    pub async fn zscore(&self, key: impl Serialize, member: impl Serialize) -> Result<Option<f64>> {
+    pub async fn zscore(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward)] member: impl Serialize,
+    ) -> Result<Option<f64>> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.zscore(key, member))
             .await
     }
 
     /// Executes the `BITCOUNT` command with client-side caching.
-    pub async fn bitcount(&self, key: impl Serialize, range: BitRange) -> Result<usize> {
+    pub async fn bitcount(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        range: BitRange,
+    ) -> Result<usize> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.bitcount(key, range))
             .await
     }
 
     /// Executes the `BITPOS` command with client-side caching.
-    pub async fn bitpos(&self, key: impl Serialize, bit: u64, range: BitRange) -> Result<usize> {
+    pub async fn bitpos(
+        &self,
+        #[arg(forward)] key: impl Serialize,
+        bit: u64,
+        range: BitRange,
+    ) -> Result<usize> {
         self.process_prepared_command(
             key_to_bulk_string(&key),
             self.client.bitpos(key, bit, range),
@@ -437,7 +481,7 @@ impl Cache {
     }
 
     /// Executes the `GETBIT` command with client-side caching.
-    pub async fn getbit(&self, key: impl Serialize, offset: u64) -> Result<u64> {
+    pub async fn getbit(&self, #[arg(forward)] key: impl Serialize, offset: u64) -> Result<u64> {
         self.process_prepared_command(key_to_bulk_string(&key), self.client.getbit(key, offset))
             .await
     }
@@ -445,8 +489,8 @@ impl Cache {
     /// Executes the `BITFIELD_RO` command with client-side caching.
     pub async fn bitfield_readonly<'a>(
         &self,
-        key: impl Serialize,
-        sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'a>> + Serialize,
+        #[arg(forward)] key: impl Serialize,
+        #[arg(forward, many)] sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'a>> + Serialize,
     ) -> Result<Vec<u64>> {
         self.process_prepared_command(
             key_to_bulk_string(&key),
@@ -506,8 +550,8 @@ impl Cache {
     }
 }
 
-fn key_to_bulk_string(key: &impl Serialize) -> BulkString {
-    let args = CommandArgsMut::default().arg(key).freeze();
+fn key_to_bulk_string(key: &impl Arg) -> BulkString {
+    let args = CommandArgsMut::default().arg(Serde(key)).freeze();
     args.into_iter()
         .next()
         .expect("expected a single argument")

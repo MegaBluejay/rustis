@@ -14,6 +14,7 @@ use std::{collections::HashMap, fmt, str::FromStr};
 /// # See Also
 /// [Redis Server Management Commands](https://redis.io/commands/?group=server)
 /// [ACL guide](https://redis.io/docs/manual/security/acl/)
+#[arg_macro::arg]
 pub trait ServerCommands<'a>: Sized {
     /// The command shows the available ACL categories if called without arguments.
     /// If a category name is given, the command shows all the Redis commands in the specified category.
@@ -39,7 +40,10 @@ pub trait ServerCommands<'a>: Sized {
     ///
     /// # See Also
     /// [<https://redis.io/commands/acl-deluser/>](https://redis.io/commands/acl-deluser/)
-    fn acl_deluser(self, usernames: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn acl_deluser(
+        self,
+        #[arg(many)] usernames: impl Serialize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("ACL").arg("DELUSER").arg(usernames).cluster_info(
@@ -261,7 +265,7 @@ pub trait ServerCommands<'a>: Sized {
     fn acl_setuser(
         self,
         username: impl Serialize,
-        rules: impl Serialize,
+        #[arg(many)] rules: impl Serialize,
     ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,
@@ -399,7 +403,7 @@ pub trait ServerCommands<'a>: Sized {
     /// [<https://redis.io/commands/command-docs/>](https://redis.io/commands/command-docs/)
     fn command_docs<R: Response>(
         self,
-        command_names: impl Serialize,
+        #[arg(many)] command_names: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("COMMAND").arg("DOCS").arg(command_names))
     }
@@ -411,7 +415,10 @@ pub trait ServerCommands<'a>: Sized {
     ///
     /// # See Also
     /// [<https://redis.io/commands/command-_getkeys/>](https://redis.io/commands/command-_getkeys/)
-    fn command_getkeys<R: Response>(self, args: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn command_getkeys<R: Response>(
+        self,
+        #[arg(many)] args: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("COMMAND").arg("GETKEYS").arg(args))
     }
 
@@ -424,7 +431,7 @@ pub trait ServerCommands<'a>: Sized {
     /// [<https://redis.io/commands/command-getkeysandflags/>](https://redis.io/commands/command-getkeysandflags/)
     fn command_getkeysandflags<R: Response>(
         self,
-        args: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("COMMAND").arg("GETKEYSANDFLAGS").arg(args))
     }
@@ -470,7 +477,7 @@ pub trait ServerCommands<'a>: Sized {
     /// [<https://redis.io/commands/command-info/>](https://redis.io/commands/command-info/)
     fn command_info(
         self,
-        command_names: impl Serialize,
+        #[arg(many)] command_names: impl Serialize,
     ) -> PreparedCommand<'a, Self, Vec<CommandInfo>> {
         prepare_command(self, cmd("COMMAND").arg("INFO").arg(command_names))
     }
@@ -500,7 +507,10 @@ pub trait ServerCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/config-get/>](https://redis.io/commands/config-get/)
     #[must_use]
-    fn config_get<R: Response>(self, params: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn config_get<R: Response>(
+        self,
+        #[arg(many)] params: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("CONFIG").arg("GET").arg(params))
     }
 
@@ -575,7 +585,7 @@ pub trait ServerCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/config-set/>](https://redis.io/commands/config-set/)
     #[must_use]
-    fn config_set(self, configs: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn config_set(self, #[arg(many)] configs: impl Serialize) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,
             cmd("CONFIG").arg("SET").arg(configs).cluster_info(
@@ -664,7 +674,10 @@ pub trait ServerCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/info/>](https://redis.io/commands/info/)
     #[must_use]
-    fn info<R: Response>(self, sections: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn info<R: Response>(
+        self,
+        #[arg(many)] sections: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
             cmd("INFO").arg(sections).cluster_info(
@@ -773,7 +786,7 @@ pub trait ServerCommands<'a>: Sized {
     #[must_use]
     fn latency_histogram<R: Response>(
         self,
-        commands: impl Serialize,
+        #[arg(many)] commands: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -844,7 +857,10 @@ pub trait ServerCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/latency-latest/>](https://redis.io/commands/latency-latest/)
     #[must_use]
-    fn latency_reset(self, events: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn latency_reset(
+        self,
+        #[arg(many)] events: impl Serialize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("LATENCY").arg("RESET").arg(events).cluster_info(

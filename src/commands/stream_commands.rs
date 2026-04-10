@@ -9,6 +9,7 @@ use std::collections::HashMap;
 /// # See Also
 /// [Redis Generic Commands](https://redis.io/commands/?group=stream)
 /// [Streams tutorial](https://redis.io/docs/data-types/streams-tutorial/)
+#[arg_macro::arg]
 pub trait StreamCommands<'a>: Sized {
     /// The XACK command removes one or multiple messages
     /// from the Pending Entries List (PEL) of a stream consumer group
@@ -24,7 +25,7 @@ pub trait StreamCommands<'a>: Sized {
         self,
         key: impl Serialize,
         group: impl Serialize,
-        ids: impl Serialize,
+        #[arg(many)] ids: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("XACK").key(key).arg(group).arg(ids))
     }
@@ -45,7 +46,7 @@ pub trait StreamCommands<'a>: Sized {
         self,
         key: impl Serialize,
         stream_id: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
         options: XAddOptions,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -101,7 +102,7 @@ pub trait StreamCommands<'a>: Sized {
         group: impl Serialize,
         consumer: impl Serialize,
         min_idle_time: u64,
-        ids: impl Serialize,
+        #[arg(many)] ids: impl Serialize,
         options: XClaimOptions,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -123,7 +124,11 @@ pub trait StreamCommands<'a>: Sized {
     ///
     /// # See Also
     /// [<https://redis.io/commands/xdel/>](https://redis.io/commands/xdel/)
-    fn xdel(self, key: impl Serialize, ids: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn xdel(
+        self,
+        key: impl Serialize,
+        #[arg(many)] ids: impl Serialize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("XDEL").key(key).arg(ids))
     }
 
@@ -427,7 +432,7 @@ pub trait StreamCommands<'a>: Sized {
         self,
         options: XReadOptions,
         keys: impl Serialize,
-        ids: impl Serialize,
+        #[arg(many)] ids: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -448,8 +453,8 @@ pub trait StreamCommands<'a>: Sized {
         group: impl Serialize,
         consumer: impl Serialize,
         options: XReadGroupOptions,
-        keys: impl Serialize,
-        ids: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] ids: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,

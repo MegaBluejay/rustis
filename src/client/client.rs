@@ -441,9 +441,10 @@ impl<'a> TransactionCommands<'a> for &'a Client {}
 impl<'a> TopKCommands<'a> for &'a Client {}
 impl<'a> VectorSetCommands<'a> for &'a Client {}
 
+#[arg_macro::arg]
 impl<'a> PubSubCommands<'a> for &'a Client {
     #[inline]
-    async fn subscribe(self, channels: impl Serialize) -> Result<PubSubStream> {
+    async fn subscribe(self, #[arg(many)] channels: impl Serialize) -> Result<PubSubStream> {
         let channels = CommandArgsMut::default().arg(channels).freeze();
 
         let (pub_sub_sender, pub_sub_receiver): (PubSubSender, PubSubReceiver) = mpsc::unbounded();
@@ -460,7 +461,7 @@ impl<'a> PubSubCommands<'a> for &'a Client {
     }
 
     #[inline]
-    async fn psubscribe(self, patterns: impl Serialize) -> Result<PubSubStream> {
+    async fn psubscribe(self, #[arg(many)] patterns: impl Serialize) -> Result<PubSubStream> {
         let patterns = CommandArgsMut::default().arg(patterns).freeze();
 
         let (pub_sub_sender, pub_sub_receiver): (PubSubSender, PubSubReceiver) = mpsc::unbounded();
@@ -477,7 +478,7 @@ impl<'a> PubSubCommands<'a> for &'a Client {
     }
 
     #[inline]
-    async fn ssubscribe(self, shardchannels: impl Serialize) -> Result<PubSubStream> {
+    async fn ssubscribe(self, #[arg(many)] shardchannels: impl Serialize) -> Result<PubSubStream> {
         let shardchannels = CommandArgsMut::default().arg(shardchannels).freeze();
 
         let (pub_sub_sender, pub_sub_receiver): (PubSubSender, PubSubReceiver) = mpsc::unbounded();

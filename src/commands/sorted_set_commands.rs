@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 ///
 /// # See Also
 /// [Redis Sorted Set Commands](https://redis.io/commands/?group=sorted-set)
+#[arg_macro::arg]
 pub trait SortedSetCommands<'a>: Sized {
     /// Adds all the specified members with the specified scores
     /// to the sorted set stored at key.
@@ -22,7 +23,7 @@ pub trait SortedSetCommands<'a>: Sized {
     fn zadd(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
         options: ZAddOptions,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("ZADD").key(key).arg(options).arg(items))
@@ -98,7 +99,7 @@ pub trait SortedSetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/zdiff/>](https://redis.io/commands/zdiff/)
     #[must_use]
-    fn zdiff<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn zdiff<R: Response>(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("ZDIFF").key_with_count(keys))
     }
 
@@ -111,7 +112,10 @@ pub trait SortedSetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/zdiff/>](https://redis.io/commands/zdiff/)
     #[must_use]
-    fn zdiff_with_scores<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn zdiff_with_scores<R: Response>(
+        self,
+        #[arg(many)] keys: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("ZDIFF").key_with_count(keys).arg("WITHSCORES"))
     }
 
@@ -127,7 +131,7 @@ pub trait SortedSetCommands<'a>: Sized {
     fn zdiffstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
@@ -166,8 +170,8 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zinter<R: Response>(
         self,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -190,8 +194,8 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zinter_with_scores<R: Response>(
         self,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -213,7 +217,11 @@ pub trait SortedSetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/zintercard/>](https://redis.io/commands/zintercard/)
     #[must_use]
-    fn zintercard(self, keys: impl Serialize, limit: usize) -> PreparedCommand<'a, Self, usize> {
+    fn zintercard(
+        self,
+        #[arg(many)] keys: impl Serialize,
+        limit: usize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("ZINTERCARD")
@@ -235,8 +243,8 @@ pub trait SortedSetCommands<'a>: Sized {
     fn zinterstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
@@ -282,7 +290,7 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zmpop<R: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         where_: ZWhere,
         count: usize,
     ) -> PreparedCommand<'a, Self, Option<ZMPopResult<R>>> {
@@ -309,7 +317,7 @@ pub trait SortedSetCommands<'a>: Sized {
     fn zmscore<R: Response>(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("ZMSCORE").key(key).arg(members))
     }
@@ -662,8 +670,8 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zunion<R: Response>(
         self,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -686,8 +694,8 @@ pub trait SortedSetCommands<'a>: Sized {
     #[must_use]
     fn zunion_with_scores<R: Response>(
         self,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -712,8 +720,8 @@ pub trait SortedSetCommands<'a>: Sized {
     fn zunionstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
-        weights: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] weights: impl Serialize,
         aggregate: impl Into<Option<ZAggregate>>,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(

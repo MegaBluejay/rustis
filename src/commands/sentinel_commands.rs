@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 /// A group of Redis commands related to [Sentinel](https://redis.io/docs/management/sentinel/)
 /// # See Also
 /// [Sentinel Commands](https://redis.io/docs/management/sentinel/#sentinel-commands)
+#[arg_macro::arg]
 pub trait SentinelCommands<'a>: Sized {
     /// Get the current value of a global Sentinel configuration parameter.
     ///
@@ -98,7 +99,7 @@ pub trait SentinelCommands<'a>: Sized {
     #[must_use]
     fn sentinel_info_cache<R: Response>(
         self,
-        master_names: impl Serialize,
+        #[arg(many)] master_names: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("SENTINEL").arg("INFO-CACHE").arg(master_names))
     }
@@ -166,7 +167,7 @@ pub trait SentinelCommands<'a>: Sized {
     fn sentinel_set(
         self,
         name: impl Serialize,
-        configs: impl Serialize,
+        #[arg(many)] configs: impl Serialize,
     ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("SENTINEL").arg("SET").arg(name).arg(configs))
     }

@@ -9,6 +9,7 @@ use serde::Serialize;
 ///
 /// # See Also
 /// [Redis Generic Commands](https://redis.io/commands/?group=bitmap)
+#[arg_macro::arg]
 pub trait BitmapCommands<'a>: Sized {
     /// Count the number of set bits (population counting) in a string.
     ///
@@ -74,7 +75,7 @@ pub trait BitmapCommands<'a>: Sized {
     fn bitfield<'b>(
         self,
         key: impl Serialize,
-        sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'b>> + Serialize,
+        #[arg(many)] sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'b>> + Serialize,
     ) -> PreparedCommand<'a, Self, Vec<u64>> {
         prepare_command(self, cmd("BITFIELD").key(key).arg(sub_commands))
     }
@@ -96,7 +97,7 @@ pub trait BitmapCommands<'a>: Sized {
     fn bitfield_readonly<'b>(
         self,
         key: impl Serialize,
-        sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'b>> + Serialize,
+        #[arg(many)] sub_commands: impl IntoIterator<Item = BitFieldSubCommand<'b>> + Serialize,
     ) -> PreparedCommand<'a, Self, Vec<u64>> {
         prepare_command(self, cmd("BITFIELD_RO").key(key).arg(sub_commands))
     }
@@ -115,7 +116,7 @@ pub trait BitmapCommands<'a>: Sized {
         self,
         operation: BitOperation,
         dest_key: impl Serialize,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("BITOP").arg(operation).key(dest_key).key(keys))
     }

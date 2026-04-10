@@ -65,6 +65,7 @@ where
 }
 
 /// A group of blocking commands
+#[arg_macro::arg]
 pub trait BlockingCommands<'a>: Sized {
     /// This command is the blocking variant of [`lmove`](crate::commands::ListCommands::lmove).
     ///
@@ -106,7 +107,7 @@ pub trait BlockingCommands<'a>: Sized {
     fn blmpop<R: Response + DeserializeOwned>(
         self,
         timeout: f64,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         where_: LMoveWhere,
         count: usize,
     ) -> PreparedCommand<'a, Self, Option<(String, R)>> {
@@ -139,7 +140,7 @@ pub trait BlockingCommands<'a>: Sized {
     #[must_use]
     fn blpop<R1: Response + DeserializeOwned, R2: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         timeout: f64,
     ) -> PreparedCommand<'a, Self, Option<(R1, R2)>> {
         prepare_command(self, cmd("BLPOP").key(keys).arg(timeout))
@@ -163,7 +164,7 @@ pub trait BlockingCommands<'a>: Sized {
     #[must_use]
     fn brpop<R1: Response + DeserializeOwned, R2: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         timeout: f64,
     ) -> PreparedCommand<'a, Self, Option<(R1, R2)>> {
         prepare_command(self, cmd("BRPOP").key(keys).arg(timeout))
@@ -183,7 +184,7 @@ pub trait BlockingCommands<'a>: Sized {
     fn bzmpop<R: Response + DeserializeOwned>(
         self,
         timeout: f64,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         where_: ZWhere,
         count: usize,
     ) -> PreparedCommand<'a, Self, Option<ZMPopResult<R>>> {
@@ -212,7 +213,7 @@ pub trait BlockingCommands<'a>: Sized {
     #[must_use]
     fn bzpopmax<R1: Response + DeserializeOwned, R2: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         timeout: f64,
     ) -> PreparedCommand<'a, Self, BZpopMinMaxResult<R1, R2>> {
         prepare_command(self, cmd("BZPOPMAX").key(keys).arg(timeout))
@@ -232,7 +233,7 @@ pub trait BlockingCommands<'a>: Sized {
     #[must_use]
     fn bzpopmin<R1: Response + DeserializeOwned, R2: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         timeout: f64,
     ) -> PreparedCommand<'a, Self, BZpopMinMaxResult<R1, R2>> {
         prepare_command(self, cmd("BZPOPMIN").key(keys).arg(timeout))

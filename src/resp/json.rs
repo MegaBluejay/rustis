@@ -11,6 +11,7 @@ use serde::{
 ///
 /// # Example
 /// ```rust
+/// # use serde::original as serde;
 /// use rustis::{
 ///     client::Client,
 ///     commands::{FlushingMode, ServerCommands, StringCommands},
@@ -111,6 +112,7 @@ where
 ///
 /// # Example
 /// ```rust
+/// # use serde::original as serde;
 /// use rustis::{
 ///     client::Client,
 ///     commands::{FlushingMode, ServerCommands, StringCommands},

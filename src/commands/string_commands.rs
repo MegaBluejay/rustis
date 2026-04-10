@@ -12,6 +12,7 @@ use std::fmt;
 /// A group of Redis commands related to [`Strings`](https://redis.io/docs/data-types/strings/)
 /// # See Also
 /// [Redis Generic Commands](https://redis.io/commands/?group=string)
+#[arg_macro::arg]
 pub trait StringCommands<'a>: Sized {
     /// If key already exists and is a string,
     /// this command appends the value at the end of the string.
@@ -295,12 +296,12 @@ pub trait StringCommands<'a>: Sized {
     ///
     /// If the command is successful the new incremented value is stored as the new value of the key (replacing the old one),
     /// and returned to the caller as a string.
-    ///   
+    ///
     /// Both the value already contained in the string key and the increment argument can be optionally provided in exponential notation,
     /// however the value computed after the increment is stored consistently in the same format, that is,
     /// an integer number followed (if needed) by a dot, and a variable number of digits representing the decimal part of the number.
     /// Trailing zeroes are always removed.
-    ///    
+    ///
     /// The precision of the output is fixed at 17 digits after the decimal point
     /// regardless of the actual internal precision of the computation.
     ///
@@ -385,7 +386,7 @@ pub trait StringCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/mget/>](https://redis.io/commands/mget/)
     #[must_use]
-    fn mget<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn mget<R: Response>(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
             cmd("MGET")
@@ -402,7 +403,7 @@ pub trait StringCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/mset/>](https://redis.io/commands/mset/)
     #[must_use]
-    fn mset(self, items: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn mset(self, #[arg(many)] items: impl Serialize) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,
             cmd("MSET").key_with_step(items, 2).cluster_info(
@@ -424,7 +425,7 @@ pub trait StringCommands<'a>: Sized {
     #[must_use]
     fn msetex<'b>(
         self,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
         condition: impl Into<Option<SetCondition<'b>>>,
         expiration: impl Into<Option<SetExpiration>>,
     ) -> PreparedCommand<'a, Self, bool> {
@@ -456,7 +457,7 @@ pub trait StringCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/msetnx/>](https://redis.io/commands/msetnx/)
     #[must_use]
-    fn msetnx(self, items: impl Serialize) -> PreparedCommand<'a, Self, bool> {
+    fn msetnx(self, #[arg(many)] items: impl Serialize) -> PreparedCommand<'a, Self, bool> {
         prepare_command(
             self,
             cmd("MSETNX")

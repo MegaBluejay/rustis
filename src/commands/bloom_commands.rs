@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # See Also
 /// [Bloom Filter Commands](https://redis.io/commands/?group=bf)
+#[arg_macro::arg]
 pub trait BloomCommands<'a>: Sized {
     /// Adds an item to a bloom filter
     ///
@@ -103,7 +104,7 @@ pub trait BloomCommands<'a>: Sized {
     fn bf_insert<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
         options: BfInsertOptions,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -158,7 +159,7 @@ pub trait BloomCommands<'a>: Sized {
     fn bf_madd<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("BF.MADD").key(key).arg(items))
     }
@@ -179,7 +180,7 @@ pub trait BloomCommands<'a>: Sized {
     fn bf_mexists<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("BF.MEXISTS").key(key).arg(items))
     }

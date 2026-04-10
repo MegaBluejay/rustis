@@ -9,6 +9,7 @@ use crate::{
 ///
 /// # See Also
 /// [Redis List Commands](https://redis.io/commands/?group=list)
+#[arg_macro::arg]
 pub trait ListCommands<'a>: Sized {
     /// Returns the element at index index in the list stored at key.
     ///
@@ -96,7 +97,7 @@ pub trait ListCommands<'a>: Sized {
     #[must_use]
     fn lmpop<R: Response + DeserializeOwned>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         where_: LMoveWhere,
         count: usize,
     ) -> PreparedCommand<'a, Self, (String, Vec<R>)> {
@@ -187,7 +188,7 @@ pub trait ListCommands<'a>: Sized {
     fn lpush(
         self,
         key: impl Serialize,
-        elements: impl Serialize,
+        #[arg(many)] elements: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("LPUSH").key(key).arg(elements))
     }
@@ -204,7 +205,7 @@ pub trait ListCommands<'a>: Sized {
     fn lpushx(
         self,
         key: impl Serialize,
-        elements: impl Serialize,
+        #[arg(many)] elements: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("LPUSHX").key(key).arg(elements))
     }
@@ -294,7 +295,7 @@ pub trait ListCommands<'a>: Sized {
     fn rpush(
         self,
         key: impl Serialize,
-        elements: impl Serialize,
+        #[arg(many)] elements: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("RPUSH").key(key).arg(elements))
     }
@@ -311,7 +312,7 @@ pub trait ListCommands<'a>: Sized {
     fn rpushx(
         self,
         key: impl Serialize,
-        elements: impl Serialize,
+        #[arg(many)] elements: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("RPUSHX").key(key).arg(elements))
     }

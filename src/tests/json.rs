@@ -11,7 +11,7 @@ use serial_test::serial;
 #[cfg_attr(feature = "async-std-runtime", async_std::test)]
 #[serial]
 async fn get_set_json() -> Result<()> {
-    #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+    #[derive(Debug, Deserialize, serde::original::Serialize, PartialEq, Eq, Clone)]
     pub struct Person {
         pub id: u32,
         pub name: String,

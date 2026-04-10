@@ -13,6 +13,7 @@ use serde::{
 /// # See Also
 /// [Redis Cluster Management commands](https://redis.io/commands/?group=cluster)
 /// [Redis cluster specification](https://redis.io/docs/reference/cluster-spec/)
+#[arg_macro::arg]
 pub trait ClusterCommands<'a>: Sized {
     /// When a cluster client receives an -ASK redirect,
     /// the ASKING command is sent to the target node followed by the command which was redirected.
@@ -34,7 +35,10 @@ pub trait ClusterCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/cluster-addslots/>](https://redis.io/commands/cluster-addslots/)
     #[must_use]
-    fn cluster_addslots<S>(self, slots: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn cluster_addslots<S>(
+        self,
+        #[arg(many)] slots: impl Serialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("CLUSTER").arg("ADDSLOTS").arg(slots))
     }
 
@@ -48,7 +52,10 @@ pub trait ClusterCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/cluster-addslotsrange/>](https://redis.io/commands/cluster-addslotsrange/)
     #[must_use]
-    fn cluster_addslotsrange<S>(self, slots: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn cluster_addslotsrange<S>(
+        self,
+        #[arg(many)] slots: impl Serialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("CLUSTER").arg("ADDSLOTSRANGE").arg(slots))
     }
 
@@ -102,7 +109,10 @@ pub trait ClusterCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/cluster-delslots/>](https://redis.io/commands/cluster-delslots/)
     #[must_use]
-    fn cluster_delslots<S>(self, slots: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn cluster_delslots<S>(
+        self,
+        #[arg(many)] slots: impl Serialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("CLUSTER").arg("DELSLOTS").arg(slots))
     }
 
@@ -115,7 +125,10 @@ pub trait ClusterCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/cluster-delslotsrange/>](https://redis.io/commands/cluster-delslotsrange/)
     #[must_use]
-    fn cluster_delslotsrange<S>(self, slots: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn cluster_delslotsrange<S>(
+        self,
+        #[arg(many)] slots: impl Serialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("CLUSTER").arg("DELSLOTSRANGE").arg(slots))
     }
 
@@ -488,13 +501,13 @@ pub struct ClusterInfo {
     /// Mark node xxx as failing.
     pub cluster_stats_messages_fail_sent: usize,
 
-    /// Mark node xxx as failing.    
+    /// Mark node xxx as failing.
     pub cluster_stats_messages_fail_received: usize,
 
-    /// Pub/Sub Publish propagation, see [`Pubsub`](https://redis.io/topics/pubsub#pubsub).  
+    /// Pub/Sub Publish propagation, see [`Pubsub`](https://redis.io/topics/pubsub#pubsub).
     pub cluster_stats_messages_publish_sent: usize,
 
-    /// Pub/Sub Publish propagation, see [`Pubsub`](https://redis.io/topics/pubsub#pubsub).  
+    /// Pub/Sub Publish propagation, see [`Pubsub`](https://redis.io/topics/pubsub#pubsub).
     pub cluster_stats_messages_publish_received: usize,
 
     /// Replica initiated leader election to replace its master.

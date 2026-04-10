@@ -1,6 +1,6 @@
 use crate::{
     client::{PreparedCommand, prepare_command},
-    resp::{Response, cmd},
+    resp::{Response, Serde, cmd},
 };
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # See Also
 /// [Count-min Sketch Commands](https://redis.io/commands/?group=cms)
+#[arg_macro::arg]
 pub trait CountMinSketchCommands<'a>: Sized {
     /// Increases the count of item by increment.
     ///
@@ -28,7 +29,7 @@ pub trait CountMinSketchCommands<'a>: Sized {
     fn cms_incrby<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("CMS.INCRBY").key(key).arg(items))
     }
@@ -111,15 +112,15 @@ pub trait CountMinSketchCommands<'a>: Sized {
     fn cms_merge(
         self,
         destination: impl Serialize,
-        sources: impl Serialize,
-        weights: Option<impl Serialize>,
+        #[arg(many)] sources: impl Serialize,
+        #[arg(many, forward)] weights: Option<impl Serialize>,
     ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,
             cmd("CMS.MERGE")
                 .key(destination)
                 .key_with_count(sources)
-                .arg(weights.map(|w| ("WEIGHTS", w))),
+                .arg(weights.map(|w| ("WEIGHTS", Serde(w)))),
         )
     }
 
@@ -142,7 +143,7 @@ pub trait CountMinSketchCommands<'a>: Sized {
     fn cms_query<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("CMS.QUERY").key(key).arg(items))
     }

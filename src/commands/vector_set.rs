@@ -9,6 +9,7 @@ use smallvec::SmallVec;
 ///
 /// # See Also
 /// [Redis Sorted Set Commands](https://redis.io/docs/latest/commands/?group=vector_set)
+#[arg_macro::arg]
 pub trait VectorSetCommands<'a>: Sized {
     /// Add a new element into the vector set specified by key.
     ///

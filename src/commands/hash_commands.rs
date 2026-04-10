@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 ///
 /// # See Also
 /// [Redis Hash Commands](https://redis.io/commands/?group=hash)
+#[arg_macro::arg]
 pub trait HashCommands<'a>: Sized {
     /// Removes the specified fields from the hash stored at key.
     ///
@@ -20,7 +21,11 @@ pub trait HashCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/hdel/>](https://redis.io/commands/hdel/)
     #[must_use]
-    fn hdel(self, key: impl Serialize, fields: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn hdel(
+        self,
+        key: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("HDEL").key(key).arg(fields))
     }
 
@@ -66,7 +71,7 @@ pub trait HashCommands<'a>: Sized {
         key: impl Serialize,
         seconds: u64,
         option: impl Into<Option<ExpireOption>>,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -106,7 +111,7 @@ pub trait HashCommands<'a>: Sized {
         key: impl Serialize,
         unix_time_seconds: u64,
         option: impl Into<Option<ExpireOption>>,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -137,7 +142,7 @@ pub trait HashCommands<'a>: Sized {
     fn hexpiretime<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -193,7 +198,7 @@ pub trait HashCommands<'a>: Sized {
     fn hgetdel<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -219,7 +224,7 @@ pub trait HashCommands<'a>: Sized {
         self,
         key: impl Serialize,
         options: GetExOptions,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -301,7 +306,7 @@ pub trait HashCommands<'a>: Sized {
     fn hmget<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("HMGET").key(key).arg(fields))
     }
@@ -322,7 +327,7 @@ pub trait HashCommands<'a>: Sized {
     fn hpersist<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("HPERSIST").key(key).arg(fields))
     }
@@ -350,7 +355,7 @@ pub trait HashCommands<'a>: Sized {
         key: impl Serialize,
         milliseconds: u64,
         option: impl Into<Option<ExpireOption>>,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -388,7 +393,7 @@ pub trait HashCommands<'a>: Sized {
         key: impl Serialize,
         unix_time_milliseconds: u64,
         option: impl Into<Option<ExpireOption>>,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -420,7 +425,7 @@ pub trait HashCommands<'a>: Sized {
     fn hpexpiretime<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -449,7 +454,7 @@ pub trait HashCommands<'a>: Sized {
     fn hpttl<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -537,7 +542,11 @@ pub trait HashCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/hset/>](https://redis.io/commands/hset/)
     #[must_use]
-    fn hset(self, key: impl Serialize, items: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn hset(
+        self,
+        key: impl Serialize,
+        #[arg(many)] items: impl Serialize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("HSET").key(key).arg(items))
     }
 
@@ -556,7 +565,7 @@ pub trait HashCommands<'a>: Sized {
         key: impl Serialize,
         condition: impl Into<Option<HSetExCondition>>,
         expiration: impl Into<Option<SetExpiration>>,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, bool> {
         let mut counter = ArgCounter::default();
         items.serialize(&mut counter).expect("Arg counting failed");
@@ -627,7 +636,7 @@ pub trait HashCommands<'a>: Sized {
     fn httl<R: Response>(
         self,
         key: impl Serialize,
-        fields: impl Serialize,
+        #[arg(many)] fields: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,

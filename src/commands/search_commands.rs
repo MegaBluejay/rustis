@@ -18,6 +18,7 @@ use std::{collections::HashMap, fmt};
 /// # See Also
 /// * [RedisSearch Commands](https://redis.io/commands/?group=search)
 /// * [Auto-Suggest Commands](https://redis.io/commands/?group=suggestion)
+#[arg_macro::arg]
 pub trait SearchCommands<'a>: Sized {
     /// Run a search query on an index,
     /// and perform aggregate transformations on the results,
@@ -224,7 +225,7 @@ pub trait SearchCommands<'a>: Sized {
     fn ft_dictadd(
         self,
         dict: impl Serialize,
-        terms: impl Serialize,
+        #[arg(many)] terms: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("FT.DICTADD").arg(dict).arg(terms))
     }
@@ -244,7 +245,7 @@ pub trait SearchCommands<'a>: Sized {
     fn ft_dictdel(
         self,
         dict: impl Serialize,
-        terms: impl Serialize,
+        #[arg(many)] terms: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("FT.DICTDEL").arg(dict).arg(terms))
     }
@@ -435,7 +436,7 @@ pub trait SearchCommands<'a>: Sized {
         self,
         index: impl Serialize,
         limited: bool,
-        query: impl Serialize,
+        #[arg(many)] query: impl Serialize,
     ) -> PreparedCommand<'a, Self, Value> {
         prepare_command(
             self,
@@ -534,7 +535,7 @@ pub trait SearchCommands<'a>: Sized {
         index: impl Serialize,
         synonym_group_id: impl Serialize,
         skip_initial_scan: bool,
-        terms: impl Serialize,
+        #[arg(many)] terms: impl Serialize,
     ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,

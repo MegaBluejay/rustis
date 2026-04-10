@@ -8,6 +8,7 @@ use serde::Serialize;
 ///
 /// # See Also
 /// [Redis Hash Commands](https://redis.io/commands/?group=hyperloglog)
+#[arg_macro::arg]
 pub trait HyperLogLogCommands<'a>: Sized {
     /// Adds the specified elements to the specified HyperLogLog.
     ///
@@ -20,7 +21,7 @@ pub trait HyperLogLogCommands<'a>: Sized {
     fn pfadd(
         self,
         key: impl Serialize,
-        elements: impl Serialize,
+        #[arg(many)] elements: impl Serialize,
     ) -> PreparedCommand<'a, Self, bool> {
         prepare_command(self, cmd("PFADD").key(key).arg(elements))
     }
@@ -33,7 +34,7 @@ pub trait HyperLogLogCommands<'a>: Sized {
     ///
     /// # See Also
     /// [<https://redis.io/commands/pfcount/>](https://redis.io/commands/pfcount/)
-    fn pfcount(self, keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn pfcount(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("PFCOUNT").key(keys))
     }
 
@@ -44,7 +45,7 @@ pub trait HyperLogLogCommands<'a>: Sized {
     fn pfmerge(
         self,
         dest_key: impl Serialize,
-        source_keys: impl Serialize,
+        #[arg(many)] source_keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(self, cmd("PFMERGE").key(dest_key).key(source_keys))
     }

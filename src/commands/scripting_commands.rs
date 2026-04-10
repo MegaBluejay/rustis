@@ -11,6 +11,7 @@ use std::collections::HashMap;
 /// [Redis Scripting and Functions Commands](https://redis.io/commands/?group=scripting)
 /// [Scripting with LUA](https://redis.io/docs/manual/programmability/eval-intro/)
 /// [Functions](https://redis.io/docs/manual/programmability/functions-intro/)
+#[arg_macro::arg]
 pub trait ScriptingCommands<'a>: Sized {
     /// Invoke the execution of a server-side Lua script.
     ///
@@ -23,8 +24,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn eval<R: Response>(
         self,
         script: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("EVAL").arg(script).key_with_count(keys).arg(args))
     }
@@ -41,8 +42,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn eval_readonly<R: Response>(
         self,
         script: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -61,8 +62,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn evalsha<R: Response>(
         self,
         sha1: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -82,8 +83,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn evalsha_readonly<R: Response>(
         self,
         sha1: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -102,8 +103,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn fcall<R: Response>(
         self,
         function: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -122,8 +123,8 @@ pub trait ScriptingCommands<'a>: Sized {
     fn fcall_readonly<R: Response>(
         self,
         function: impl Serialize,
-        keys: impl Serialize,
-        args: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
+        #[arg(many)] args: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -309,7 +310,10 @@ pub trait ScriptingCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/script-exists/>](https://redis.io/commands/script-exists/)
     #[must_use]
-    fn script_exists(self, sha1s: impl Serialize) -> PreparedCommand<'a, Self, Vec<bool>> {
+    fn script_exists(
+        self,
+        #[arg(many)] sha1s: impl Serialize,
+    ) -> PreparedCommand<'a, Self, Vec<bool>> {
         prepare_command(
             self,
             cmd("SCRIPT").arg("EXISTS").arg(sha1s).cluster_info(

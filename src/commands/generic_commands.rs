@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # See Also
 /// [Redis Generic Commands](https://redis.io/commands/?group=generic)
+#[arg_macro::arg]
 pub trait GenericCommands<'a>: Sized {
     /// This command copies the value stored at the source key to the destination key.
     ///
@@ -43,7 +44,7 @@ pub trait GenericCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/del/>](https://redis.io/commands/del/)
     #[must_use]
-    fn del(self, keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn del(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("DEL")
@@ -72,7 +73,7 @@ pub trait GenericCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/exists/>](https://redis.io/commands/exists/)
     #[must_use]
-    fn exists(self, keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn exists(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("EXISTS").key(keys).cluster_info(
@@ -528,7 +529,7 @@ pub trait GenericCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/touch/>](https://redis.io/commands/touch/)
     #[must_use]
-    fn touch(self, keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn touch(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("TOUCH").key(keys).cluster_info(
@@ -575,7 +576,7 @@ pub trait GenericCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/unlink/>](https://redis.io/commands/unlink/)
     #[must_use]
-    fn unlink(self, keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
+    fn unlink(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("UNLINK").key(keys).cluster_info(
@@ -654,7 +655,7 @@ pub enum KeyType {
 pub enum ExpireOption {
     /// Set expiry only when the key has no expiry
     Nx,
-    /// Set expiry only when the key has an existing expiry  
+    /// Set expiry only when the key has an existing expiry
     Xx,
     /// Set expiry only when the new expiry is greater than current one
     Gt,

@@ -11,6 +11,7 @@ use std::collections::HashMap;
 ///
 /// # See Also
 /// [Redis Connection Management Commands](https://redis.io/commands/?group=connection)
+#[arg_macro::arg]
 pub trait ConnectionCommands<'a>: Sized {
     /// Authenticates the current connection.
     ///

@@ -9,6 +9,7 @@ use serde::Serialize;
 ///
 /// # See Also
 /// [RedisJson Commands](https://redis.io/commands/?group=json)
+#[arg_macro::arg]
 pub trait JsonCommands<'a>: Sized {
     /// Append the json `values` into the array at `path` after the last element in it
     ///
@@ -28,7 +29,7 @@ pub trait JsonCommands<'a>: Sized {
         self,
         key: impl Serialize,
         path: impl Serialize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("JSON.ARRAPPEND").key(key).arg(path).arg(values))
     }
@@ -90,7 +91,7 @@ pub trait JsonCommands<'a>: Sized {
         key: impl Serialize,
         path: impl Serialize,
         index: isize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -292,7 +293,7 @@ pub trait JsonCommands<'a>: Sized {
     #[must_use]
     fn json_mget<R: Response>(
         self,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
         path: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("JSON.MGET").key(keys).arg(path))
@@ -306,7 +307,10 @@ pub trait JsonCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/json.mset/>](https://redis.io/commands/json.mset/)
     #[must_use]
-    fn json_mset(self, key_path_values: impl Serialize) -> PreparedCommand<'a, Self, ()> {
+    fn json_mset(
+        self,
+        #[arg(many)] key_path_values: impl Serialize,
+    ) -> PreparedCommand<'a, Self, ()> {
         prepare_command(
             self,
             cmd("JSON.MSET")

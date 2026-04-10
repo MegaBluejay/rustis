@@ -1,3 +1,7 @@
+[workspace]
+members = ["arg-macro", "patch-serde"]
+resolver = "2"
+
 [package]
 name = "rustis"
 version = "0.1.0"
@@ -53,7 +57,8 @@ async-native-tls = { version = "0.5", optional = true }
 log = "0.4"
 crc16 = "0.4"
 rand = "0.9"
-serde = { version = "1.0", features = ["derive"] }
+arg-macro.path = "./arg-macro"
+serde = { path = "patch-serde", package = "patch-serde" }
 serde_json = { version = "1.0", optional = true }
 socket2 = "0.6"
 memchr = "2.7"

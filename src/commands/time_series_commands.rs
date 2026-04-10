@@ -13,6 +13,7 @@ use std::{collections::HashMap, fmt};
 ///
 /// # See Also
 /// [Time Series Commands](https://redis.io/commands/?group=timeseries)
+#[arg_macro::arg]
 pub trait TimeSeriesCommands<'a>: Sized {
     /// Append a sample to a time series
     ///
@@ -321,7 +322,10 @@ pub trait TimeSeriesCommands<'a>: Sized {
     /// # See Also
     /// * [<https://redis.io/commands/ts.madd/>](https://redis.io/commands/ts.madd/)
     #[must_use]
-    fn ts_madd<R: Response>(self, items: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn ts_madd<R: Response>(
+        self,
+        #[arg(many)] items: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
             cmd("TS.MADD")
@@ -356,7 +360,7 @@ pub trait TimeSeriesCommands<'a>: Sized {
     fn ts_mget<R: Response>(
         self,
         options: TsMGetOptions,
-        filters: impl Serialize,
+        #[arg(many)] filters: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("TS.MGET").arg(options).arg("FILTER").arg(filters))
     }
@@ -392,7 +396,7 @@ pub trait TimeSeriesCommands<'a>: Sized {
         from_timestamp: impl Serialize,
         to_timestamp: impl Serialize,
         options: TsMRangeOptions,
-        filters: impl Serialize,
+        #[arg(many)] filters: impl Serialize,
         groupby_options: TsGroupByOptions,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -438,7 +442,7 @@ pub trait TimeSeriesCommands<'a>: Sized {
         from_timestamp: impl Serialize,
         to_timestamp: impl Serialize,
         options: TsMRangeOptions,
-        filters: impl Serialize,
+        #[arg(many)] filters: impl Serialize,
         groupby_options: TsGroupByOptions,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
@@ -476,7 +480,10 @@ pub trait TimeSeriesCommands<'a>: Sized {
     /// # See Also
     /// * [<https://redis.io/commands/ts.queryindex/>](https://redis.io/commands/ts.queryindex/)
     #[must_use]
-    fn ts_queryindex<R: Response>(self, filters: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn ts_queryindex<R: Response>(
+        self,
+        #[arg(many)] filters: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("TS.QUERYINDEX").arg(filters))
     }
 

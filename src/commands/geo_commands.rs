@@ -15,6 +15,7 @@ use std::{fmt, marker::PhantomData};
 ///
 /// # See Also
 /// [Redis Geospatial Commands](https://redis.io/commands/?group=geo)
+#[arg_macro::arg]
 pub trait GeoCommands<'a>: Sized {
     /// Adds the specified geospatial items (longitude, latitude, name) to the specified key.
     ///
@@ -30,7 +31,7 @@ pub trait GeoCommands<'a>: Sized {
         key: impl Serialize,
         condition: impl Into<Option<GeoAddCondition>>,
         change: bool,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
@@ -76,7 +77,7 @@ pub trait GeoCommands<'a>: Sized {
     fn geohash<R: Response>(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("GEOHASH").key(key).arg(members))
     }
@@ -95,7 +96,7 @@ pub trait GeoCommands<'a>: Sized {
     fn geopos(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, Vec<Option<(f64, f64)>>> {
         prepare_command(self, cmd("GEOPOS").key(key).arg(members))
     }

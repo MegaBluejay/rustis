@@ -8,6 +8,7 @@ use serde::Serialize;
 /// A group of Redis commands related to [`Pub/Sub`](https://redis.io/docs/manual/pubsub/)
 /// # See Also
 /// [Redis Pub/Sub Commands](https://redis.io/commands/?group=pubsub)
+#[arg_macro::arg]
 pub trait PubSubCommands<'a>: Sized {
     /// Subscribes the client to the given patterns.
     ///
@@ -47,7 +48,7 @@ pub trait PubSubCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/psubscribe/>](https://redis.io/commands/psubscribe/)
     #[allow(async_fn_in_trait)]
-    async fn psubscribe(self, patterns: impl Serialize) -> Result<PubSubStream>;
+    async fn psubscribe(self, #[arg(many)] patterns: impl Serialize) -> Result<PubSubStream>;
 
     /// Posts a message to the given channel.
     ///
@@ -134,7 +135,10 @@ pub trait PubSubCommands<'a>: Sized {
     ///
     /// # See Also
     /// [<https://redis.io/commands/pubsub-numsub/>](https://redis.io/commands/pubsub-numsub/)
-    fn pub_sub_numsub<R: Response>(self, channels: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn pub_sub_numsub<R: Response>(
+        self,
+        #[arg(many)] channels: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("PUBSUB").arg("NUMSUB").arg(channels))
     }
 
@@ -164,7 +168,7 @@ pub trait PubSubCommands<'a>: Sized {
     /// [<https://redis.io/commands/pubsub-shardnumsub/>](https://redis.io/commands/pubsub-shardnumsub/)
     fn pub_sub_shardnumsub<R: Response>(
         self,
-        channels: impl Serialize,
+        #[arg(many)] channels: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("PUBSUB").arg("SHARDNUMSUB").arg(channels))
     }
@@ -189,7 +193,7 @@ pub trait PubSubCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/subscribe/>](https://redis.io/commands/subscribe/)
     #[allow(async_fn_in_trait)]
-    async fn ssubscribe(self, shardchannels: impl Serialize) -> Result<PubSubStream>;
+    async fn ssubscribe(self, #[arg(many)] shardchannels: impl Serialize) -> Result<PubSubStream>;
 
     /// Subscribes the client to the specified channels.
     ///
@@ -228,5 +232,5 @@ pub trait PubSubCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/subscribe/>](https://redis.io/commands/subscribe/)
     #[allow(async_fn_in_trait)]
-    async fn subscribe(self, channels: impl Serialize) -> Result<PubSubStream>;
+    async fn subscribe(self, #[arg(many)] channels: impl Serialize) -> Result<PubSubStream>;
 }

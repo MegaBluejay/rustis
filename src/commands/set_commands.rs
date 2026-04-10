@@ -7,6 +7,7 @@ use serde::{Serialize, de::DeserializeOwned};
 /// A group of Redis commands related to [`Sets`](https://redis.io/docs/data-types/sets/)
 /// # See Also
 /// [Redis Set Commands](https://redis.io/commands/?group=set)
+#[arg_macro::arg]
 pub trait SetCommands<'a>: Sized {
     /// Add the specified members to the set stored at key.
     ///
@@ -19,7 +20,7 @@ pub trait SetCommands<'a>: Sized {
     fn sadd(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("SADD").key(key).arg(members))
     }
@@ -45,7 +46,7 @@ pub trait SetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/sdiff/>](https://redis.io/commands/sdiff/)
     #[must_use]
-    fn sdiff<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn sdiff<R: Response>(self, #[arg(many)] keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("SDIFF").key(keys))
     }
 
@@ -61,7 +62,7 @@ pub trait SetCommands<'a>: Sized {
     fn sdiffstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("SDIFFSTORE").arg(destination).key(keys))
     }
@@ -74,7 +75,10 @@ pub trait SetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/sinter/>](https://redis.io/commands/sinter/)
     #[must_use]
-    fn sinter<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn sinter<R: Response>(
+        self,
+        #[arg(many)] keys: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("SINTER").key(keys))
     }
 
@@ -90,7 +94,11 @@ pub trait SetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/sintercard/>](https://redis.io/commands/sintercard/)
     #[must_use]
-    fn sintercard(self, keys: impl Serialize, limit: usize) -> PreparedCommand<'a, Self, usize> {
+    fn sintercard(
+        self,
+        #[arg(many)] keys: impl Serialize,
+        limit: usize,
+    ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(
             self,
             cmd("SINTERCARD")
@@ -112,7 +120,7 @@ pub trait SetCommands<'a>: Sized {
     fn sinterstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("SINTERSTORE").arg(destination).key(keys))
     }
@@ -154,7 +162,7 @@ pub trait SetCommands<'a>: Sized {
     fn smismember<R: Response>(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("SMISMEMBER").key(key).arg(members))
     }
@@ -216,7 +224,7 @@ pub trait SetCommands<'a>: Sized {
     fn srem(
         self,
         key: impl Serialize,
-        members: impl Serialize,
+        #[arg(many)] members: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("SREM").key(key).arg(members))
     }
@@ -246,7 +254,10 @@ pub trait SetCommands<'a>: Sized {
     /// # See Also
     /// [<https://redis.io/commands/sunion/>](https://redis.io/commands/sunion/)
     #[must_use]
-    fn sunion<R: Response>(self, keys: impl Serialize) -> PreparedCommand<'a, Self, R> {
+    fn sunion<R: Response>(
+        self,
+        #[arg(many)] keys: impl Serialize,
+    ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("SUNION").key(keys))
     }
 
@@ -262,7 +273,7 @@ pub trait SetCommands<'a>: Sized {
     fn sunionstore(
         self,
         destination: impl Serialize,
-        keys: impl Serialize,
+        #[arg(many)] keys: impl Serialize,
     ) -> PreparedCommand<'a, Self, usize> {
         prepare_command(self, cmd("SUNIONSTORE").key(destination).key(keys))
     }

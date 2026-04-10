@@ -9,6 +9,7 @@ use std::collections::HashMap;
 ///
 /// # See Also
 /// [T-Digest Commands](https://redis.io/commands/?group=tdigest)
+#[arg_macro::arg]
 pub trait TDigestCommands<'a> {
     /// Adds one or more observations to a t-digest sketch.
     ///
@@ -22,7 +23,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_add(
         self,
         key: impl Serialize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, ()>
     where
         Self: Sized,
@@ -53,7 +54,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_byrank<R: Response>(
         self,
         key: impl Serialize,
-        ranks: impl Serialize,
+        #[arg(many)] ranks: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,
@@ -84,7 +85,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_byrevrank<R: Response>(
         self,
         key: impl Serialize,
-        ranks: impl Serialize,
+        #[arg(many)] ranks: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,
@@ -112,7 +113,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_cdf<R: Response>(
         self,
         key: impl Serialize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,
@@ -201,7 +202,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_merge(
         self,
         destination: impl Serialize,
-        sources: impl Serialize,
+        #[arg(many)] sources: impl Serialize,
         options: TDigestMergeOptions,
     ) -> PreparedCommand<'a, Self, ()>
     where
@@ -257,7 +258,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_quantile<R: Response>(
         self,
         key: impl Serialize,
-        quantiles: impl Serialize,
+        #[arg(many)] quantiles: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,
@@ -292,7 +293,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_rank<R: Response>(
         self,
         key: impl Serialize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,
@@ -342,7 +343,7 @@ pub trait TDigestCommands<'a> {
     fn tdigest_revrank<R: Response>(
         self,
         key: impl Serialize,
-        values: impl Serialize,
+        #[arg(many)] values: impl Serialize,
     ) -> PreparedCommand<'a, Self, R>
     where
         Self: Sized,

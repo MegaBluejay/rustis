@@ -9,6 +9,7 @@ use std::collections::HashMap;
 ///
 /// # See Also
 /// [Cuckoo Filter Commands](https://redis.io/commands/?group=cf)
+#[arg_macro::arg]
 pub trait CuckooCommands<'a>: Sized {
     /// Adds an item to the cuckoo filter, creating the filter if it does not exist.
     ///
@@ -159,7 +160,7 @@ pub trait CuckooCommands<'a>: Sized {
         self,
         key: impl Serialize,
         options: CfInsertOptions,
-        item: impl Serialize,
+        #[arg(many)] item: impl Serialize,
     ) -> PreparedCommand<'a, Self, Vec<bool>> {
         prepare_command(
             self,
@@ -204,7 +205,7 @@ pub trait CuckooCommands<'a>: Sized {
         self,
         key: impl Serialize,
         options: CfInsertOptions,
-        item: impl Serialize,
+        #[arg(many)] item: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(
             self,
@@ -256,7 +257,7 @@ pub trait CuckooCommands<'a>: Sized {
     fn cf_mexists<R: Response>(
         self,
         key: impl Serialize,
-        items: impl Serialize,
+        #[arg(many)] items: impl Serialize,
     ) -> PreparedCommand<'a, Self, R> {
         prepare_command(self, cmd("CF.MEXISTS").key(key).arg(items))
     }

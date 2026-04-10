@@ -24,10 +24,12 @@ It gives to **rustis** a great flexibility to accept many type of arguments for 
 
 #### Example
 ```
+# use serde::original as serde;
 use rustis::{
     client::Client,
     commands::{FlushingMode, ServerCommands, StringCommands},
     Result,
+    resp::Serde,
 };
 use serde::Serialize;
 
@@ -50,7 +52,7 @@ async fn main() -> Result<()> {
     client.set("key", "value").await?;
     client.set("key", "value".to_owned()).await?;
     client.set("key", 'c').await?;
-    client.set("key", MyI32(12)).await?;
+    client.set("key", Serde(MyI32(12))).await?;
 
     Ok(())
 }
@@ -113,6 +115,7 @@ The different command traits implementations ([`Client`](crate::client::Client),
 
 pub(crate) use arg_counter::*;
 pub(crate) use arg_serializer::*;
+pub use args::*;
 pub(crate) use buffer_decoder::*;
 pub use bulk_string::*;
 pub use command::*;
@@ -133,6 +136,7 @@ pub(crate) use value_deserialize::*;
 
 mod arg_counter;
 mod arg_serializer;
+mod args;
 mod buffer_decoder;
 mod bulk_string;
 mod command;
